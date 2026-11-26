@@ -158,7 +158,7 @@ body{background:#000;color:var(--ink);font-family:var(--f-ui);overflow:hidden;us
         <div id="trip"><button id="trst" type="button" title="1秒長押しでTRIPを0.0に戻す">リセット</button><span class="lb">TRIP</span><span><span id="dst" class="sg" style="font-size:22px">000.0</span><span class="lb"> km</span></span></div>
       </div>
       <div class="right">
-        <span class="lb" id="altLb">ALT</span>
+        <span class="lb" id="altLb">標高</span>
         <div id="gauge"></div>
         <span style="white-space:nowrap"><span id="alt" class="sg" style="font-size:16px">!!--</span><span class="lb" style="font-size:14px">m</span></span>
       </div>
@@ -166,7 +166,7 @@ body{background:#000;color:var(--ink);font-family:var(--f-ui);overflow:hidden;us
   </div></div>
   <div id="toast"></div>
   <div class="bar">
-    <span class="ver">Ver 0.6</span>
+    <span class="ver">Ver 0.7</span>
     <button class="bb" id="zero" type="button">水平リセット</button>
     <span id="zst">水平：未設定</span>
     <button class="bb" id="rev" type="button">上下反転</button>
@@ -179,7 +179,7 @@ body{background:#000;color:var(--ink);font-family:var(--f-ui);overflow:hidden;us
 
 <div class="op" id="op" role="dialog" aria-label="ご利用の前に">
   <img class="lg" alt="Moto Meter V" src="assets/logo.webp">
-  <div class="y">モトメーター V　Ver 0.6</div>
+  <div class="y">モトメーター V　Ver 0.7</div>
   <div class="land">横画面専用アプリです<span>スマホを横向きにしてお使いください</span></div>
 
   <div class="warn">
@@ -327,7 +327,7 @@ $("trst").addEventListener("contextmenu",e=>e.preventDefault());
 
 /* 標高：国土地理院の標高API（地面の高さ）。取れないときはGPSの高さを目安に（サムレットと同じ） */
 let lastQ=null,lastQT=0,qBusy=false,gsiOk=false;
-function altSrc(gpsMode){$("altLb").textContent=gpsMode?"ALT(GPS)":"ALT";$("altLb").classList.toggle("gps",gpsMode)}
+function altSrc(gpsMode){$("altLb").textContent=gpsMode?"標高(GPS)":"標高";$("altLb").classList.toggle("gps",gpsMode)}
 async function queryGsi(p){
   qBusy=true;
   try{
