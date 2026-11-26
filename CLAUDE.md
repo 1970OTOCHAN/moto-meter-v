@@ -4,21 +4,23 @@
 Moto Meter Samlet（moto-samlet）とは別のアプリ。Samlet はそのまま残す。
 
 - 公開先: https://1970otochan.github.io/moto-meter-v/ （main に push すると GitHub Pages が自動で公開）
-- 公開用のファイル：index.html, manifest.webmanifest, sw.js, icon-192.png, icon-512.png, apple-touch-icon.png, assets/logo.webp, assets/bike.webp, fonts/mmv-seg7.woff, fonts/OFL.txt
+- 公開用のファイル：index.html, manifest.webmanifest, sw.js, icon-192.png, icon-512.png, apple-touch-icon.png, assets/logo.webp, assets/bike_yellow/red/black/blue/silver.webp, fonts/mmv-seg7.woff, fonts/OFL.txt
 - アイコンは仮（未決定）
 
 ## 守ること
 - 純正メーター（スズキ）のデザインを忠実に再現しない。「SUZUKI」「V-STROM」などの商標を入れない
-- タイトルロゴ（assets/logo.webp）とバイクの絵（assets/bike.webp）はユーザーのオリジナル。バイクの絵はSマーク・文字を消した版を使う
+- タイトルロゴ（assets/logo.webp）とバイクの絵（assets/bike_*.webp）はユーザーのオリジナル。バイクの絵はSマーク・文字を消した版を使う
 - オレンジ色は使わない
 - 見た目を変えるときは、作り変える前にサンプル画面を見せる
 
 ## 画面（720×350 の画面を、スマホの大きさに合わせて拡大・縮小）
-- 上の黒い縁：タイトルロゴ
+- 上の黒い縁：タイトルロゴ。左右のはしに緑の角丸長方形のランプ「鈴」「菌」（字は黒いふち線、中は緑。Ver 0.4）
 - 青い液晶（676×288、下の黒い縁を厚くした分だけ約1割縮小）：方位バー／GPSの文字／速度（3けた、使わない桁はうすい「8」）／時計／日付3段／勾配のバイクのイラスト（2.5倍に誇張）／勾配の数字（整数）／TRIP／標高（8段ゲージ＋数字）
 - 下の黒い縁：「水平リセット」「水平設定：済み／水平：未設定」「上下反転」。左はしに Ver、右はしに ©
 - ボタンを押したときのお知らせは、画面のまん中（日付の下あたり）に2秒だけ出して消す（Ver 0.3、案B。触っても反応しない）
 - 縦向きにすると「スマホを横向きにしてください」を出す
+- 起動の演出（Ver 0.4）：「同意してスタート」を押すと、速度に「G」→「Go」（小さい o）、Goを3秒点滅。同時に「鈴」「菌」ランプが点滅（それまでは消灯）してから点いたままになり、タイトルロゴに光の筋が3回走って星がキラッと光る
+- バイクの色（Ver 0.4）：絵をタップするたびに 黄→赤→黒→青→銀。選んだ色は mmv_bike に覚え、次に開いたときも前回の色。黒は液晶で見えるよう濃いグレー、青は液晶と見分けがつく明るめの青
 
 ## 仕様メモ（数字の測り方は Moto Meter Samlet と同じ）
 - 速度：GPSの速さ（無いときは位置の変化から計算）。時速3km未満は0。6秒GPSが来ないと「--」、GPSの文字が点滅

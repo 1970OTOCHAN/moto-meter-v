@@ -32,8 +32,30 @@ body{background:#000;color:var(--ink);font-family:var(--f-ui);overflow:hidden;us
 #box{position:relative;width:720px;height:350px;flex:none}
 #inner{position:absolute;left:0;top:0;width:720px;height:350px;transform-origin:0 0}
 #frame{position:relative;background:#111;border-radius:30px;padding:6px 18px 6px;border:4px solid #333;height:100%;display:flex;flex-direction:column}
-.logo{text-align:center;height:30px;margin-bottom:4px;flex:none}
-.logo img{height:30px;width:auto}
+.logo{position:relative;text-align:center;height:30px;margin-bottom:4px;flex:none}
+.logo img{height:30px;width:auto;display:block}
+/* タイトルロゴ：キラッと光る演出（ロゴの形だけに光を通す） */
+.lgw{position:relative;display:inline-block;height:30px}
+.shine{position:absolute;inset:0;pointer-events:none;-webkit-mask:url(assets/logo.webp) center/100% 100% no-repeat;mask:url(assets/logo.webp) center/100% 100% no-repeat;
+  background:linear-gradient(105deg,transparent 0%,transparent 40%,rgba(255,255,255,.95) 50%,transparent 60%,transparent 100%);background-size:300% 100%;background-position:150% 0;opacity:0}
+.shine.go{animation:sweep 1.1s ease-in-out 3}
+@keyframes sweep{0%{background-position:150% 0;opacity:1}100%{background-position:-50% 0;opacity:1}}
+.spk{position:absolute;width:14px;height:14px;pointer-events:none;opacity:0;transform:scale(0);
+  background:radial-gradient(circle,#fff 0 18%,transparent 19%),linear-gradient(#fff,#fff) center/2px 100% no-repeat,linear-gradient(#fff,#fff) center/100% 2px no-repeat;
+  filter:drop-shadow(0 0 3px #fff8c0)}
+.spk.go{animation:twinkle .7s ease-in-out 3}
+@keyframes twinkle{0%,100%{opacity:0;transform:scale(0) rotate(0)}50%{opacity:1;transform:scale(1) rotate(45deg)}}
+/* 「鈴」「菌」のランプ */
+.lamp{position:absolute;top:3px;width:60px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+  font:900 21px/1 "Hiragino Sans","Noto Sans CJK JP","Noto Sans JP",sans-serif;color:transparent;-webkit-text-stroke:1.4px #000;paint-order:stroke;
+  background:radial-gradient(ellipse at 50% 40%,#b9ffb0 0%,#4fe35a 45%,#1d9c2c 100%);
+  box-shadow:0 0 10px 2px rgba(80,255,100,.55),inset 0 1px 2px rgba(255,255,255,.6);transition:filter .1s,box-shadow .1s}
+.lamp.l{left:0}.lamp.r{right:0}
+.lamp.off{filter:brightness(.28) saturate(.6);box-shadow:none}
+@keyframes lampBlink{0%,49%{filter:none}50%,100%{filter:brightness(.28) saturate(.6);box-shadow:none}}
+.lamp.blinking{animation:lampBlink .6s steps(1) 5}
+#spd.blinking{animation:spdBlink .6s steps(1) 5}
+@keyframes spdBlink{0%,49%{opacity:1}50%,100%{opacity:0}}
 #lw{flex:1;min-height:0;position:relative}
 #lcd{position:absolute;left:50%;top:0;width:676px;height:288px;transform-origin:50% 0;background:var(--lcd);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
 #tapeW{position:relative;height:56px;flex:none;overflow:hidden}
@@ -100,7 +122,7 @@ body{background:#000;color:var(--ink);font-family:var(--f-ui);overflow:hidden;us
 
 <div id="stage"><div id="box"><div id="inner">
 <div id="frame">
-  <div class="logo"><img alt="Moto Meter V" src="assets/logo.webp"></div>
+  <div class="logo"><span class="lamp l off" id="lampL">鈴</span><span class="lamp r off" id="lampR">菌</span><span class="lgw" id="lgw"><img alt="Moto Meter V" src="assets/logo.webp"><span class="shine" id="shine"></span><span class="spk" style="left:6%;top:-2px"></span><span class="spk" style="left:47%;top:14px;animation-delay:.25s"></span><span class="spk" style="left:88%;top:-4px;animation-delay:.5s"></span></span></div>
   <div id="lw"><div id="lcd">
     <div id="tapeW">
       <div id="tape"></div>
@@ -124,9 +146,9 @@ body{background:#000;color:var(--ink);font-family:var(--f-ui);overflow:hidden;us
       </div>
       <div class="mid">
         <div style="display:flex"><div class="clkW"><span id="clk" class="sg" style="font-size:24px">!-:--</span><i></i></div></div>
-        <div class="slopeA"><div style="position:relative;width:130px;height:84px">
+        <div class="slopeA"><div id="bikeBox" style="position:relative;width:130px;height:84px;cursor:pointer">
           <div id="slope">
-            <img alt="" src="assets/bike.webp" style="position:absolute;left:14px;bottom:14px;width:102px;height:auto">
+            <img alt="" id="bikeImg" src="assets/bike_yellow.webp" style="position:absolute;left:14px;bottom:14px;width:102px;height:auto">
             <div style="position:absolute;left:-4px;right:-4px;bottom:10px;height:4px;border-radius:2px;background:var(--line)"></div>
           </div>
         </div></div>
@@ -142,7 +164,7 @@ body{background:#000;color:var(--ink);font-family:var(--f-ui);overflow:hidden;us
   </div></div>
   <div id="toast"></div>
   <div class="bar">
-    <span class="ver">Ver 0.3</span>
+    <span class="ver">Ver 0.4</span>
     <button class="bb" id="zero" type="button">水平リセット</button>
     <span id="zst">水平：未設定</span>
     <button class="bb" id="rev" type="button">上下反転</button>
@@ -155,7 +177,7 @@ body{background:#000;color:var(--ink);font-family:var(--f-ui);overflow:hidden;us
 
 <div class="op" id="op" role="dialog" aria-label="ご利用の前に">
   <img class="lg" alt="Moto Meter V" src="assets/logo.webp">
-  <div class="y">モトメーター V　Ver 0.3（試作）</div>
+  <div class="y">モトメーター V　Ver 0.4（試作）</div>
 
   <div class="warn">
     <h2>必ずお読みください</h2>
@@ -178,6 +200,7 @@ body{background:#000;color:var(--ink);font-family:var(--f-ui);overflow:hidden;us
       <li>「同意してスタート」を押し、位置情報の使用を「許可」する</li>
       <li>画面の下の「水平リセット」を押す（横向きの左右それぞれで1回）</li>
       <li>上り坂で「下り」と出たときは「上下反転」を押す</li>
+      <li>バイクの絵をタップすると、色が 黄→赤→黒→青→銀 と変わります</li>
       <li>TRIPは、左の「リセット」ボタンを1秒長押しすると 0.0 に戻ります（アプリを閉じても続きから数えます）</li>
     </ol>
   </div>
@@ -253,7 +276,7 @@ function dist(a,b){const R=6371000,r=Math.PI/180,dLa=(b.lat-a.lat)*r,dLo=(b.lon-
   const x=Math.sin(dLa/2)**2+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dLo/2)**2;return 2*R*Math.asin(Math.sqrt(x))}
 
 /* 速度（GPSの速さ。無いときは位置の変化から計算） */
-let spPrev=null,kmh=null;
+let spPrev=null,kmh=null,intro=false;
 function speedFrom(pos,p,t){
   const s=pos.coords.speed;let v=null;
   if(s!=null&&isFinite(s)&&s>=0)v=s*3.6;
@@ -265,6 +288,7 @@ function drawSpeed(){
   const fresh=Date.now()-lastFix<6000;
   $("gps").classList.toggle("no",!(fresh&&gpsGood));
   $("gps").classList.toggle("blink",!fresh);
+  if(intro)return;
   $("spd").textContent=(fresh&&kmh!==null)?String(Math.round(kmh)).padStart(3,"!"):"!--";
 }
 setInterval(drawSpeed,500);
@@ -500,6 +524,31 @@ $("zero").addEventListener("click",doZero);
 $("rev").addEventListener("click",()=>{rev=!rev;shown=null;store.set("mmv_rev",rev?"1":"0");toast(rev?"上り・下りを反転しました":"上り・下りを元に戻しました")});
 setInterval(drawGrade,150);
 
+/* ---------- バイクの色（Ver 0.4）：絵をタップするたびに 黄→赤→黒→青→銀。選んだ色は覚えておく（mmv_bike） ---------- */
+const BIKES=[["yellow","黄"],["red","赤"],["black","黒"],["blue","青"],["silver","銀"]];
+let bikeI=Math.max(0,BIKES.findIndex(b=>b[0]===store.get("mmv_bike")));
+function showBike(){$("bikeImg").src="assets/bike_"+BIKES[bikeI][0]+".webp"}
+showBike();
+$("bikeBox").addEventListener("click",()=>{bikeI=(bikeI+1)%BIKES.length;store.set("mmv_bike",BIKES[bikeI][0]);showBike();toast("バイクの色："+BIKES[bikeI][1]+"（絵をタップで切り替え）")});
+
+/* ---------- 起動の演出（Ver 0.4）：速度に「G」→「Go」、「Go」を3秒点滅。
+   同時に「鈴」「菌」ランプが点滅して点灯したままに、タイトルロゴがキラキラ光る ---------- */
+function startIntro(){
+  intro=true;const sp=$("spd"),L=[$("lampL"),$("lampR")];
+  sp.textContent="!G!";
+  setTimeout(()=>{sp.textContent="!Go"},500);
+  setTimeout(()=>{
+    sp.classList.add("blinking");
+    L.forEach(e=>{e.classList.remove("off");e.classList.add("blinking")});
+    $("shine").classList.add("go");document.querySelectorAll(".spk").forEach(e=>e.classList.add("go"));
+  },1000);
+  setTimeout(()=>{
+    sp.classList.remove("blinking");L.forEach(e=>e.classList.remove("blinking"));
+    $("shine").classList.remove("go");document.querySelectorAll(".spk").forEach(e=>e.classList.remove("go"));
+    intro=false;drawSpeed();
+  },4000);
+}
+
 /* ---------- 画面ON維持 ---------- */
 let running=false;
 async function keepOn(){
@@ -524,7 +573,7 @@ async function start(){
   running=true;keepOn();startGeo();
   $("op").classList.add("hide");$("turn").classList.add("on");
   try{if(screen.orientation&&screen.orientation.lock)screen.orientation.lock("landscape").catch(()=>{})}catch(e){}
-  curO=null;loadZero();fit();
+  curO=null;loadZero();fit();startIntro();
   setTimeout(()=>{if(!gotMotion)toast("傾きセンサーが動きません。ChromeかSafariで直接開いてください")},3000);
 }
 $("go").addEventListener("click",start);
