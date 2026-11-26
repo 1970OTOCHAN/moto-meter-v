@@ -45,7 +45,7 @@ body{background:#000;color:var(--ink);font-family:var(--f-ui);overflow:hidden;us
   filter:drop-shadow(0 0 3px #fff8c0)}
 .spk.go{animation:twinkle .7s ease-in-out 3}
 @keyframes twinkle{0%,100%{opacity:0;transform:scale(0) rotate(0)}50%{opacity:1;transform:scale(1) rotate(45deg)}}
-/* 「鈴」「菌」のランプ */
+/* 緑のランプ（Ver 0.8で「鈴」「菌」の字は廃止） */
 .lamp{position:absolute;top:3px;width:60px;height:26px;border-radius:8px;display:flex;align-items:center;justify-content:center;
   font:900 21px/1 "Hiragino Sans","Noto Sans CJK JP","Noto Sans JP",sans-serif;color:transparent;-webkit-text-stroke:1.4px #000;paint-order:stroke;
   background:radial-gradient(ellipse at 50% 40%,#b9ffb0 0%,#4fe35a 45%,#1d9c2c 100%);
@@ -69,6 +69,11 @@ body{background:#000;color:var(--ink);font-family:var(--f-ui);overflow:hidden;us
 .left{width:280px;flex:none;position:relative}
 #gps{position:absolute;top:26px;left:0;color:#7dff9a;font-size:15px;font-weight:bold}
 #gps.no{color:#9aa3d6}
+/* GPSの電波の目安（Ver 0.8）：位置の誤差から4本の棒で表示 */
+#sig{position:absolute;top:28px;left:38px;display:flex;align-items:flex-end;gap:2px;height:15px}
+#sig i{display:block;width:4px;background:#2c3dbf;border-radius:1px}
+#sig i:nth-child(1){height:5px}#sig i:nth-child(2){height:8px}#sig i:nth-child(3){height:11px}#sig i:nth-child(4){height:15px}
+#sig i.on{background:#f2f5ff}
 #spdsvg{position:absolute;left:18px;bottom:30px;overflow:hidden}
 .mid{flex:1;display:flex;flex-direction:column;min-width:0}
 .clkW{position:relative;flex:none;padding:0 14px 3px 2px;border-bottom:2px solid var(--line)}
@@ -124,7 +129,7 @@ body{background:#000;color:var(--ink);font-family:var(--f-ui);overflow:hidden;us
 
 <div id="stage"><div id="box"><div id="inner">
 <div id="frame">
-  <div class="logo"><span class="lamp l off" id="lampL">鈴</span><span class="lamp r off" id="lampR">菌</span><span class="lgw" id="lgw"><img alt="Moto Meter V" src="assets/logo.webp"><span class="shine" id="shine"></span><span class="spk" style="left:6%;top:-2px"></span><span class="spk" style="left:47%;top:14px;animation-delay:.25s"></span><span class="spk" style="left:88%;top:-4px;animation-delay:.5s"></span></span></div>
+  <div class="logo"><span class="lamp l off" id="lampL"></span><span class="lamp r off" id="lampR"></span><span class="lgw" id="lgw"><img alt="Moto Meter V" src="assets/logo.webp"><span class="shine" id="shine"></span><span class="spk" style="left:6%;top:-2px"></span><span class="spk" style="left:47%;top:14px;animation-delay:.25s"></span><span class="spk" style="left:88%;top:-4px;animation-delay:.5s"></span></span></div>
   <div id="lw"><div id="lcd">
     <div id="tapeW">
       <div id="tape"></div>
@@ -139,7 +144,7 @@ body{background:#000;color:var(--ink);font-family:var(--f-ui);overflow:hidden;us
         <span id="dw" style="font-size:18px;font-weight:bold">---</span>
       </div>
       <div class="left">
-        <span id="gps" class="no">GPS</span>
+        <span id="gps" class="no">GPS</span><span id="sig"><i></i><i></i><i></i><i></i></span>
         <svg id="spdsvg" viewBox="0 -150 345 150" preserveAspectRatio="xMidYMax meet" width="214" height="150">
           <text class="sg" x="0" y="0" font-size="150" fill="#2a3cc4">888</text>
           <text id="spd" class="sg" x="0" y="0" font-size="150" fill="#f2f5ff">!--</text>
@@ -166,7 +171,7 @@ body{background:#000;color:var(--ink);font-family:var(--f-ui);overflow:hidden;us
   </div></div>
   <div id="toast"></div>
   <div class="bar">
-    <span class="ver">Ver 0.7</span>
+    <span class="ver">Ver 0.8</span>
     <button class="bb" id="zero" type="button">水平リセット</button>
     <span id="zst">水平：未設定</span>
     <button class="bb" id="rev" type="button">上下反転</button>
@@ -179,7 +184,7 @@ body{background:#000;color:var(--ink);font-family:var(--f-ui);overflow:hidden;us
 
 <div class="op" id="op" role="dialog" aria-label="ご利用の前に">
   <img class="lg" alt="Moto Meter V" src="assets/logo.webp">
-  <div class="y">モトメーター V　Ver 0.7</div>
+  <div class="y">モトメーター V　Ver 0.8</div>
   <div class="land">横画面専用アプリです<span>スマホを横向きにしてお使いください</span></div>
 
   <div class="warn">
@@ -274,7 +279,7 @@ function showAlt(m){
 }
 
 /* ---------- GPS：速度・TRIP・標高・方位 ---------- */
-let lastFix=0,gpsGood=false;
+let lastFix=0,gpsGood=false,lastAcc=999;
 function dist(a,b){const R=6371000,r=Math.PI/180,dLa=(b.lat-a.lat)*r,dLo=(b.lon-a.lon)*r;
   const x=Math.sin(dLa/2)**2+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dLo/2)**2;return 2*R*Math.asin(Math.sqrt(x))}
 
@@ -291,6 +296,9 @@ function drawSpeed(){
   const fresh=Date.now()-lastFix<6000;
   $("gps").classList.toggle("no",!(fresh&&gpsGood));
   $("gps").classList.toggle("blink",!fresh);
+  /* 電波の目安：誤差5m以内=4本、15m以内=3本、30m以内=2本、それより大きい=1本、6秒位置が来ない=0本 */
+  const n=!fresh?0:lastAcc<=5?4:lastAcc<=15?3:lastAcc<=30?2:1;
+  document.querySelectorAll("#sig i").forEach((e,i)=>e.classList.toggle("on",i<n));
   if(intro)return;
   $("spd").textContent=(fresh&&kmh!==null)?String(Math.round(kmh)).padStart(3,"!"):"!--";
 }
@@ -341,7 +349,7 @@ async function queryGsi(p){
 }
 function onPos(pos){
   const p={lat:pos.coords.latitude,lon:pos.coords.longitude},t=Date.now();
-  lastFix=t;gpsGood=pos.coords.accuracy<=50;
+  lastFix=t;lastAcc=pos.coords.accuracy;gpsGood=lastAcc<=50;
   speedFrom(pos,p,t);tripFrom(pos,p,t);gpsHeading(pos,p);
   if(!qBusy&&(!lastQ||dist(lastQ,p)>15||t-lastQT>5000)){lastQ=p;lastQT=t;queryGsi(p)}
   if(!gsiOk){
@@ -535,7 +543,7 @@ showBike();
 $("bikeBox").addEventListener("click",()=>{bikeI=(bikeI+1)%BIKES.length;store.set("mmv_bike",BIKES[bikeI][0]);showBike();toast("バイクの色："+BIKES[bikeI][1]+"（絵をタップで切り替え）")});
 
 /* ---------- 起動の演出（Ver 0.4）：速度に「G」→「Go」、「Go」を3秒点滅。
-   同時に「鈴」「菌」ランプが点滅して点灯したままに、タイトルロゴがキラキラ光る ---------- */
+   同時に緑のランプが点滅して点灯したままに、タイトルロゴがキラキラ光る ---------- */
 function startIntro(){
   intro=true;const sp=$("spd"),L=[$("lampL"),$("lampR")];
   sp.textContent="!G!";
@@ -569,7 +577,9 @@ async function start(){
     }
   }catch(e){$("err").textContent="傾きセンサーの許可を確認できませんでした";return}
   try{
-    if(typeof DeviceOrientationEvent!=="undefined"&&typeof DeviceOrientationEvent.requestPermission==="function")await DeviceOrientationEvent.requestPermission();
+    /* Ver 0.8：方位センサーの許可の返事は最長4秒だけ待つ（返事が来ないままでも計測を始める。許可されれば後から方位センサーが動く） */
+    if(typeof DeviceOrientationEvent!=="undefined"&&typeof DeviceOrientationEvent.requestPermission==="function")
+      await Promise.race([DeviceOrientationEvent.requestPermission().catch(()=>{}),new Promise(r=>setTimeout(r,4000))]);
   }catch(e){}
   window.addEventListener("devicemotion",onMotion);
   startCompass();
