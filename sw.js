@@ -1,4 +1,4 @@
-const CACHE="moto-meter-v-v1.0";
+const CACHE="moto-meter-v-v1.1";
 const SHELL=["./","index.html","manifest.webmanifest","icon-192.png","icon-512.png","apple-touch-icon.png","assets/logo.webp","assets/bike_yellow.webp","assets/bike_red.webp","assets/bike_black.webp","assets/bike_blue.webp","assets/bike_silver.webp","fonts/mmv-seg7.woff"];
 self.addEventListener("install",e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL)));self.skipWaiting()});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k.startsWith("moto-meter-v-")&&k!==CACHE).map(k=>caches.delete(k)))));self.clients.claim()});
