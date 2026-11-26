@@ -5,7 +5,7 @@ Moto Meter Samlet（moto-samlet）とは別のアプリ。Samlet はそのまま
 
 - 公開先: https://1970otochan.github.io/moto-meter-v/ （main に push すると GitHub Pages が自動で公開）
 - 公開用のファイル：index.html, manifest.webmanifest, sw.js, icon-192.png, icon-512.png, apple-touch-icon.png, assets/logo.webp, assets/bike_yellow/red/black/blue/silver.webp, fonts/mmv-seg7.woff, fonts/OFL.txt
-- アイコンは仮（未決定）
+- アイコン（Ver 1.2）：上が黒い縁にロゴ、下が青い液晶に黄色のバイクの絵（案A）。ほかのアプリと同じく丸く切り抜ける作り（manifest の purpose は "any maskable"、大事な部分は中央80%に収める）
 
 ## 守ること
 - 純正メーター（スズキ）のデザインを忠実に再現しない。「SUZUKI」「V-STROM」などの商標を入れない
