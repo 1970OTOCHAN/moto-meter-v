@@ -1,0 +1,546 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>Moto Meter V™</title>
+<meta name="theme-color" content="#000000">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Moto Meter V">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<style>
+/* 7セグメントの数字：DSEG7 Classic Italic（SIL OFL 1.1、fonts/OFL.txt）をアプリの中に入れてある */
+@font-face{font-family:"MMV7";src:url("fonts/mmv-seg7.woff") format("woff");font-style:normal;font-display:block}
+:root{--ink:#f2f5ff;--line:#c9d2ff;--lcd:#1b2aa8;--off:#2a3cc4;
+  --f-ui:system-ui,-apple-system,"Hiragino Sans","Noto Sans CJK JP","Noto Sans JP",sans-serif;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:#000;color:var(--ink);font-family:var(--f-ui);overflow:hidden;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
+.hide{display:none!important}
+.sg{font-family:"MMV7",monospace}
+.lb{font-size:16px;color:#dfe6ff;letter-spacing:1px}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.15}}
+.blink{animation:blink 1.2s ease-in-out infinite}
+
+/* 計測画面：720×350 の画面を、スマホの大きさに合わせて拡大・縮小する */
+#stage{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+#box{position:relative;width:720px;height:350px;flex:none}
+#inner{position:absolute;left:0;top:0;width:720px;height:350px;transform-origin:0 0}
+#frame{position:relative;background:#111;border-radius:30px;padding:6px 18px 6px;border:4px solid #333;height:100%;display:flex;flex-direction:column}
+.logo{text-align:center;height:30px;margin-bottom:4px;flex:none}
+.logo img{height:30px;width:auto}
+#lw{flex:1;min-height:0;position:relative}
+#lcd{position:absolute;left:50%;top:0;width:676px;height:288px;transform-origin:50% 0;background:var(--lcd);border-radius:10px;overflow:hidden;display:flex;flex-direction:column}
+#tapeW{position:relative;height:56px;flex:none;overflow:hidden}
+#tape{position:absolute;inset:0;transition:opacity .3s}
+#tape.dim{opacity:.15}
+#tapeMsg{position:absolute;left:0;right:0;top:9px;text-align:center;font-size:15px;font-weight:bold;color:var(--ink)}
+.curve{position:absolute;left:-10%;width:120%;top:42px;height:60px;border-radius:50%;background:var(--lcd);border-top:2px solid var(--line)}
+#tri{position:absolute;left:50%;top:31px;transform:translateX(-50%);width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-bottom:11px solid #ff4d4d}
+.body{position:relative;z-index:2;flex:1;min-height:0;display:flex;padding:0 14px 6px 14px;gap:10px}
+.date{position:absolute;left:50%;top:58px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1.15;z-index:3}
+.left{width:280px;flex:none;position:relative}
+#gps{position:absolute;top:26px;left:0;color:#7dff9a;font-size:15px;font-weight:bold}
+#gps.no{color:#9aa3d6}
+#spdsvg{position:absolute;left:18px;bottom:30px;overflow:hidden}
+.mid{flex:1;display:flex;flex-direction:column;min-width:0}
+.clkW{position:relative;flex:none;padding:0 14px 3px 2px;border-bottom:2px solid var(--line)}
+.clkW i{position:absolute;right:2px;bottom:-2px;width:2px;height:40px;background:var(--line);transform:rotate(18deg);transform-origin:bottom}
+.slopeA{flex:1;min-height:0;display:flex;align-items:flex-end;justify-content:flex-end;padding:4px 4px 4px 0}
+#slope{position:absolute;inset:0;transform-origin:50% 85%;transition:transform .4s}
+.grdRow{display:flex;justify-content:flex-end;padding-right:156px;align-items:baseline;gap:6px;border-bottom:2px solid var(--line);padding-bottom:3px}
+#trip{display:flex;align-items:baseline;justify-content:flex-end;gap:10px;margin-top:3px;padding-right:4px;border-radius:6px;cursor:pointer}
+#trip.press{background:rgba(255,255,255,.15)}
+.right{width:66px;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+#altLb.gps{font-size:11px;letter-spacing:0}
+#gauge{display:flex;flex-direction:column;gap:3px}
+.gz{height:12px;width:28px;background:#2c3dbf;border-radius:2px}
+.gz.on{background:var(--ink)}
+.bar{height:40px;flex:none;display:flex;align-items:center;justify-content:center;gap:14px;padding-top:4px;position:relative}
+.bar .ver{position:absolute;left:4px;bottom:4px;color:#6f7590;font-size:10px}
+.bar .cp{position:absolute;right:4px;bottom:4px;color:#6f7590;font-size:10px}
+.bb{height:30px;padding:0 18px;border-radius:15px;border:1px solid #556;background:#262a40;color:#e8ecff;font:bold 14px var(--f-ui);cursor:pointer}
+.bb:disabled{opacity:.5}
+#zst{color:#9fa6c8;font-size:13px;min-width:110px;text-align:center}
+#toast{position:absolute;left:50%;bottom:52px;transform:translateX(-50%);z-index:9;background:rgba(10,12,30,.9);color:#fff;font:bold 14px var(--f-ui);padding:6px 14px;border-radius:16px;white-space:nowrap;display:none}
+
+/* 縦向きのとき */
+#turn{position:fixed;inset:0;z-index:40;background:#000;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:20px}
+#turn b{font-size:22px}
+#turn span{color:#aab;font-size:14px}
+@media (orientation:portrait){#turn.on{display:flex}}
+
+/* オープニング */
+.op{position:fixed;inset:0;z-index:50;background:#000;overflow-y:auto;display:flex;flex-direction:column;align-items:center;justify-content:safe center;gap:14px;
+  padding:max(20px,env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) max(20px,env(safe-area-inset-bottom)) max(20px,env(safe-area-inset-left))}
+.op .lg{width:min(80vw,420px);height:auto}
+.op .y{color:#ccc;font-size:14px;letter-spacing:.1em;text-align:center;margin-top:-6px}
+.warn{max-width:40em;border:2px solid #ffd400;border-radius:12px;padding:12px 14px;background:#1a1806}
+.warn h2{margin:0 0 6px;font-size:17px;color:#ffd400}
+.warn ul{margin:0;padding-left:1.3em;font-size:14px;line-height:1.6}
+.warn li+li{margin-top:4px}
+.howto{max-width:40em;font-size:14px;line-height:1.6;color:#ddd}
+.howto h2{margin:0 0 4px;font-size:15px}
+.howto ol{margin:0;padding-left:1.4em}
+.op .go{width:min(80vw,320px);min-height:60px;flex:none;border:0;border-radius:14px;background:#fff;color:#000;font:800 20px/1 var(--f-ui);cursor:pointer}
+.agree{color:#ccc;font-size:12px;text-align:center}
+.legal{max-width:40em;color:#aaa;font-size:12px;line-height:1.6;border-top:1px solid #333;padding-top:12px}
+.legal p{margin:0 0 6px}
+.legal .cr{text-align:center;color:#ddd}
+.err{color:#ff6b6b;font-size:13px;text-align:center;min-height:1em}
+</style>
+</head>
+<body>
+
+<div id="stage"><div id="box"><div id="inner">
+<div id="frame">
+  <div class="logo"><img alt="Moto Meter V" src="assets/logo.webp"></div>
+  <div id="lw"><div id="lcd">
+    <div id="tapeW">
+      <div id="tape"></div>
+      <div id="tapeMsg" class="hide">走り出すと方位を表示します</div>
+      <div class="curve"></div>
+      <div id="tri"></div>
+    </div>
+    <div class="body">
+      <div class="date">
+        <span id="dy" class="sg" style="font-size:20px">----</span>
+        <span id="dmd" style="font-size:20px;font-weight:bold">--月--日</span>
+        <span id="dw" style="font-size:18px;font-weight:bold">---</span>
+      </div>
+      <div class="left">
+        <span id="gps" class="no">GPS</span>
+        <svg id="spdsvg" viewBox="0 -150 345 150" preserveAspectRatio="xMidYMax meet" width="214" height="150">
+          <text class="sg" x="0" y="0" font-size="150" fill="#2a3cc4">888</text>
+          <text id="spd" class="sg" x="0" y="0" font-size="150" fill="#f2f5ff">!--</text>
+        </svg>
+        <span class="lb" style="position:absolute;right:2px;bottom:6px">km/h</span>
+      </div>
+      <div class="mid">
+        <div style="display:flex"><div class="clkW"><span id="clk" class="sg" style="font-size:24px">!-:--</span><i></i></div></div>
+        <div class="slopeA"><div style="position:relative;width:130px;height:84px">
+          <div id="slope">
+            <img alt="" src="assets/bike.webp" style="position:absolute;left:14px;bottom:14px;width:102px;height:auto">
+            <div style="position:absolute;left:-4px;right:-4px;bottom:10px;height:4px;border-radius:2px;background:var(--line)"></div>
+          </div>
+        </div></div>
+        <div class="grdRow" id="grdRow"><span id="ud" style="font-size:18px;font-weight:bold">未設定</span><span id="grd" class="sg" style="font-size:26px">--</span><span class="lb">%</span></div>
+        <div id="trip" title="長押しで0.0に戻す"><span class="lb">TRIP</span><span><span id="dst" class="sg" style="font-size:22px">000.0</span><span class="lb"> km</span></span></div>
+      </div>
+      <div class="right">
+        <span class="lb" id="altLb">ALT</span>
+        <div id="gauge"></div>
+        <span style="white-space:nowrap"><span id="alt" class="sg" style="font-size:16px">!!--</span><span class="lb" style="font-size:14px">m</span></span>
+      </div>
+    </div>
+  </div></div>
+  <div id="toast"></div>
+  <div class="bar">
+    <span class="ver">Ver 0.1</span>
+    <button class="bb" id="zero" type="button">水平リセット</button>
+    <span id="zst">水平：未設定</span>
+    <button class="bb" id="rev" type="button">上下反転</button>
+    <span class="cp">© 2026 1970 OTOCHAN</span>
+  </div>
+</div>
+</div></div></div>
+
+<div id="turn"><b>スマホを横向きにしてください</b><span>Moto Meter V は横向き専用です</span></div>
+
+<div class="op" id="op" role="dialog" aria-label="ご利用の前に">
+  <img class="lg" alt="Moto Meter V" src="assets/logo.webp">
+  <div class="y">モトメーター V　Ver 0.1（試作）</div>
+
+  <div class="warn">
+    <h2>必ずお読みください</h2>
+    <ul>
+      <li><b>走行中は、このアプリを操作したり、画面を見続けたりしないでください。</b>操作は必ず安全な場所に停車してから行ってください。</li>
+      <li>スマホは、走行中に落ちないようホルダーにしっかり固定してください。</li>
+      <li>表示される数値は<b>目安</b>です。バイクのスピードメーター・距離計や道路標識の代わりにはなりません。</li>
+      <li>速度とTRIP（走った距離）はGPSから計算します。トンネルの中や電波の悪い場所では、正しく測れないことがあります。</li>
+      <li>標高は国土地理院のデータ（地面の高さ）です。橋・高架の上やトンネルの中では実際と違う値になり、電波がないときはGPSの高さ（目安）を表示します。</li>
+      <li>勾配はスマホの傾きから計算します。加速・ブレーキ中や段差では数値がずれます（加速・減速中は数字を止めて点滅させます）。</li>
+      <li>方位は、走行中はGPSで「進んでいる向き」を表示し、停車中は最後に走っていた方角をそのまま表示します（赤い▲が点滅します）。走り出す前だけはスマホの方位センサーを使うため、エンジンや金属のホルダーの影響でずれることがあります。</li>
+      <li>位置情報（GPS）を使うため、電池を多く使います。</li>
+    </ul>
+  </div>
+
+  <div class="howto">
+    <h2>使い方</h2>
+    <ol>
+      <li>バイクを平らな場所に停め、スマホを横向きにしてホルダーに取り付ける</li>
+      <li>「同意してスタート」を押し、位置情報の使用を「許可」する</li>
+      <li>画面の下の「水平リセット」を押す（横向きの左右それぞれで1回）</li>
+      <li>上り坂で「下り」と出たときは「上下反転」を押す</li>
+      <li>TRIPは、数字を長押しすると 0.0 に戻ります（アプリを閉じても続きから数えます）</li>
+    </ol>
+  </div>
+
+  <div class="legal">
+    <p>本アプリは無料で提供しており、表示の正確さ・動作を保証するものではありません。</p>
+    <p>本アプリの使用または使用できなかったことにより生じた事故・損害・トラブル等について、作者は一切の責任を負いません。</p>
+    <p>走行中は本アプリの操作・注視をせず、交通ルールを守って安全運転でご利用ください。</p>
+    <p>アプリそのものの無断での再配布・改変・販売はご遠慮ください。スクリーンショットやリンクでの紹介は自由です。</p>
+    <p>標高データ：出典 国土地理院（標高API）</p>
+    <p>数字の書体：DSEG（© keshikan、SIL Open Font License 1.1）</p>
+    <p class="cr">Moto Meter V™<br>© 2026 1970 OTOCHAN</p>
+  </div>
+
+  <div class="agree">「同意してスタート」を押すと、上記の内容に同意したものとします。</div>
+  <button class="go" id="go" type="button">同意してスタート</button>
+  <div class="err" id="err"></div>
+</div>
+
+<script>
+{
+const $=id=>document.getElementById(id);
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+const pad=n=>String(n).padStart(2,"0");
+const WD=["日","月","火","水","木","金","土"];
+
+/* ---------- 画面の大きさ合わせ ---------- */
+function fit(){
+  const st=$("stage"),cs=getComputedStyle(st);
+  const W=st.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight);
+  const H=st.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);
+  const s=Math.min(W/720,H/350);
+  $("inner").style.transform="scale("+s+")";
+  $("box").style.width=(720*s)+"px";$("box").style.height=(350*s)+"px";
+  const lw=$("lw"),k=Math.min(lw.clientHeight/288,lw.clientWidth/676);
+  $("lcd").style.transform="translateX(-50%) scale("+k+")";
+}
+fit();addEventListener("resize",fit);addEventListener("orientationchange",()=>setTimeout(fit,300));
+/* 速度の数字を、書体の実際の大きさに合わせて枠に収める（見本と同じ） */
+function fitSpeed(){try{const c=document.createElement("canvas").getContext("2d");c.font='150px "MMV7"';const m=c.measureText("888");
+  const l=m.actualBoundingBoxLeft||0,r=m.actualBoundingBoxRight,a=m.actualBoundingBoxAscent,d=m.actualBoundingBoxDescent||0;
+  if(r&&a)$("spdsvg").setAttribute("viewBox",(-l-1)+" "+(-a-1)+" "+(l+r+2)+" "+(a+d+2));}catch(e){}}
+if(document.fonts){document.fonts.load('150px "MMV7"').then(fitSpeed).catch(()=>{});document.fonts.ready.then(fitSpeed)}
+setTimeout(fitSpeed,1000);
+
+/* ---------- お知らせ（2秒で消える） ---------- */
+let toastT=0;
+function toast(m){const t=$("toast");t.textContent=m;t.style.display="block";clearTimeout(toastT);toastT=setTimeout(()=>{t.style.display="none"},2000)}
+
+/* ---------- 日付・時計 ---------- */
+function tick(){
+  const d=new Date();
+  $("clk").textContent=String(d.getHours()).padStart(2,"!")+":"+pad(d.getMinutes());
+  $("dy").textContent=d.getFullYear();
+  $("dmd").textContent=(d.getMonth()+1)+"月"+d.getDate()+"日";
+  $("dw").textContent=WD[d.getDay()]+"曜日";
+}
+function loop(){tick();setTimeout(loop,1000-Date.now()%1000+5)}
+loop();
+
+/* ---------- 標高ゲージ（8段、1段500m、4000mで満タン） ---------- */
+const g=$("gauge");
+for(let i=0;i<8;i++){const s=document.createElement("div");s.className="gz";g.appendChild(s)}
+function showAlt(m){
+  const v=Math.round(m);$("alt").textContent=String(v).padStart(4,"!");
+  const n=Math.max(0,Math.min(8,Math.ceil(v/500)));
+  [...g.children].forEach((s,i)=>s.classList.toggle("on",(7-i)<n));
+}
+
+/* ---------- GPS：速度・TRIP・標高・方位 ---------- */
+let lastFix=0,gpsGood=false;
+function dist(a,b){const R=6371000,r=Math.PI/180,dLa=(b.lat-a.lat)*r,dLo=(b.lon-a.lon)*r;
+  const x=Math.sin(dLa/2)**2+Math.cos(a.lat*r)*Math.cos(b.lat*r)*Math.sin(dLo/2)**2;return 2*R*Math.asin(Math.sqrt(x))}
+
+/* 速度（GPSの速さ。無いときは位置の変化から計算） */
+let spPrev=null,kmh=null;
+function speedFrom(pos,p,t){
+  const s=pos.coords.speed;let v=null;
+  if(s!=null&&isFinite(s)&&s>=0)v=s*3.6;
+  else if(spPrev&&t-spPrev.t>=1000){const d=dist(spPrev,p);if(pos.coords.accuracy<=30)v=d/((t-spPrev.t)/1000)*3.6}
+  if(!spPrev||t-spPrev.t>=1000)spPrev={lat:p.lat,lon:p.lon,t};
+  if(v!==null){if(v<3)v=0;kmh=Math.min(v,999)}
+}
+function drawSpeed(){
+  const fresh=Date.now()-lastFix<6000;
+  $("gps").classList.toggle("no",!(fresh&&gpsGood));
+  $("gps").classList.toggle("blink",!fresh);
+  $("spd").textContent=(fresh&&kmh!==null)?String(Math.round(kmh)).padStart(3,"!"):"!--";
+}
+setInterval(drawSpeed,500);
+
+/* TRIP（GPSで走った距離）。電波が悪いときの位置の飛び・停車中のふらつきは数えない。
+   アプリを閉じても続きから数える（mmv_trip に保存） */
+let trip=parseFloat(store.get("mmv_trip"));if(!isFinite(trip))trip=0;
+let tAnchor=null;
+function showTrip(){$("dst").textContent=(trip%1000).toFixed(1).padStart(5,"0")}
+showTrip();
+function tripFrom(pos,p,t){
+  const acc=pos.coords.accuracy;
+  if(!(acc<=25))return;
+  if(!tAnchor){tAnchor={lat:p.lat,lon:p.lon,t};return}
+  const d=dist(tAnchor,p),dt=(t-tAnchor.t)/1000;
+  if(d<Math.max(10,acc))return;                 /* 小さな動き（ふらつき）は数えない */
+  if(dt>0&&d/dt>90){tAnchor={lat:p.lat,lon:p.lon,t};return} /* 時速約320km以上の飛びは捨てる */
+  const s=pos.coords.speed;
+  if(s!=null&&isFinite(s)&&s<0.8&&d<50){return}  /* 止まっているときのずれ */
+  trip+=d/1000;tAnchor={lat:p.lat,lon:p.lon,t};
+  store.set("mmv_trip",String(trip));showTrip();
+}
+/* TRIPの数字を長押し（1秒）で 0.0 に戻す */
+let lpT=0;
+function lpStart(e){e.preventDefault();$("trip").classList.add("press");lpT=setTimeout(()=>{trip=0;tAnchor=null;store.set("mmv_trip","0");showTrip();$("trip").classList.remove("press");toast("TRIPを 0.0 に戻しました")},1000)}
+function lpEnd(){clearTimeout(lpT);$("trip").classList.remove("press")}
+$("trip").addEventListener("pointerdown",lpStart);
+["pointerup","pointerleave","pointercancel"].forEach(ev=>$("trip").addEventListener(ev,lpEnd));
+$("trip").addEventListener("contextmenu",e=>e.preventDefault());
+
+/* 標高：国土地理院の標高API（地面の高さ）。取れないときはGPSの高さを目安に（サムレットと同じ） */
+let lastQ=null,lastQT=0,qBusy=false,gsiOk=false;
+function altSrc(gpsMode){$("altLb").textContent=gpsMode?"ALT(GPS)":"ALT";$("altLb").classList.toggle("gps",gpsMode)}
+async function queryGsi(p){
+  qBusy=true;
+  try{
+    const ctl=new AbortController();const to=setTimeout(()=>ctl.abort(),8000);
+    const r=await fetch("https://cyberjapandata2.gsi.go.jp/general/dem/scripts/getelevation.php?lon="+p.lon+"&lat="+p.lat+"&outtype=JSON",{cache:"no-store",signal:ctl.signal});
+    clearTimeout(to);
+    const d=await r.json();const h=parseFloat(d.elevation);
+    if(isFinite(h)){showAlt(h);gsiOk=true;altSrc(false)}else gsiOk=false;
+  }catch(e){gsiOk=false}
+  qBusy=false;
+}
+function onPos(pos){
+  const p={lat:pos.coords.latitude,lon:pos.coords.longitude},t=Date.now();
+  lastFix=t;gpsGood=pos.coords.accuracy<=50;
+  speedFrom(pos,p,t);tripFrom(pos,p,t);gpsHeading(pos,p);
+  if(!qBusy&&(!lastQ||dist(lastQ,p)>15||t-lastQT>5000)){lastQ=p;lastQT=t;queryGsi(p)}
+  if(!gsiOk){
+    const a=pos.coords.altitude;
+    if(a!==null&&a!==undefined&&isFinite(a)){showAlt(a);altSrc(true)}
+  }
+}
+function onPosErr(err){if(err.code===1)toast("位置情報を許可してください")}
+function startGeo(){
+  if("geolocation" in navigator)navigator.geolocation.watchPosition(onPos,onPosErr,{enableHighAccuracy:true,maximumAge:0,timeout:20000});
+  else toast("この端末では位置情報が使えません");
+}
+
+/* ---------- 方位（サムレットと同じ）----------
+   走行中（時速7km以上）：GPSの進む向き（無いときは位置の変化から計算）
+   停車中：最後に走っていた方角をそのまま（赤い▲を点滅）
+   まだ一度も走っていないときだけ：スマホの方位センサー（磁北を日本の偏角で地図の北に直す） */
+let gH=null,gT=0,prevP=null,decl=7.5;
+let mH=null,mT=0,mx=0,my=0,mLast=0,iosCompass=false;
+let dShow=null,hNow=null;
+function bearing(a,b){const r=Math.PI/180,y=Math.sin((b.lon-a.lon)*r)*Math.cos(b.lat*r),
+  x=Math.cos(a.lat*r)*Math.sin(b.lat*r)-Math.sin(a.lat*r)*Math.cos(b.lat*r)*Math.cos((b.lon-a.lon)*r);
+  return (Math.atan2(y,x)/r+360)%360}
+function gpsHeading(pos,p){
+  decl=7.9+0.26*(p.lat-37)-0.10*(p.lon-138);
+  if(decl<4||decl>11)decl=7.5;
+  const sp=pos.coords.speed,hd=pos.coords.heading,t=Date.now();
+  let h=null;
+  if(prevP){
+    const d=dist(prevP,p);
+    const fast=(sp!=null&&isFinite(sp))?sp>=2:d/Math.max((t-prevP.t)/1000,0.5)>=2;
+    if(fast){
+      if(hd!=null&&isFinite(hd))h=hd;
+      else if(d>=8)h=bearing(prevP,p);
+    }
+    if(d>=8||h!==null){prevP={lat:p.lat,lon:p.lon,t}}
+  }else prevP={lat:p.lat,lon:p.lon,t};
+  if(h!==null){gH=(h+360)%360;gT=t}
+}
+function smoothMag(h){
+  const now=performance.now(),dt=mLast?Math.min((now-mLast)/1000,0.5):0.05;mLast=now;
+  const r=h*Math.PI/180,k=mH===null?1:1-Math.exp(-dt/0.5);
+  mx+=k*(Math.cos(r)-mx);my+=k*(Math.sin(r)-my);
+  mH=(Math.atan2(my,mx)*180/Math.PI+360)%360;mT=Date.now();
+}
+function backHeading(a,b,gm){
+  const r=Math.PI/180,cX=Math.cos(b*r),cY=Math.cos(gm*r),cZ=Math.cos(a*r),sX=Math.sin(b*r),sY=Math.sin(gm*r),sZ=Math.sin(a*r);
+  const vx=-cZ*sY-sZ*sX*cY,vy=-sZ*sY+cZ*sX*cY;
+  if(Math.hypot(vx,vy)<0.15)return null;
+  return (Math.atan2(vx,vy)*180/Math.PI+360)%360;
+}
+function onOriAbs(e){
+  if(iosCompass||e.alpha==null)return;
+  const h=backHeading(e.alpha,e.beta||0,e.gamma||0);
+  if(h!==null)smoothMag((h-decl+360)%360);
+}
+function onOriIos(e){
+  if(e.webkitCompassHeading==null||!isFinite(e.webkitCompassHeading))return;
+  iosCompass=true;smoothMag((e.webkitCompassHeading-decl+360)%360);
+}
+function startCompass(){
+  if("ondeviceorientationabsolute" in window)window.addEventListener("deviceorientationabsolute",onOriAbs);
+  window.addEventListener("deviceorientation",onOriIos);
+}
+/* 方位バー（見本と同じ描き方：15°ごとの目盛り、8方位は日本語、北は赤） */
+const NM={0:"北",45:"北東",90:"東",135:"南東",180:"南",225:"南西",270:"西",315:"北西"};
+function drawTape(h){
+  const tape=$("tape");tape.innerHTML="";const w=tape.offsetWidth||676,pp=w/180;
+  for(let a=Math.ceil((h-90)/15)*15;a<=h+90;a+=15){
+    const x=w/2+(a-h)*pp,d=((a%360)+360)%360,big=NM[d]!==undefined;
+    const tk=document.createElement("div");
+    tk.style.cssText="position:absolute;top:0;left:"+x+"px;width:2px;background:#c9d2ff;height:"+(big?34:24)+"px;transform:translateX(-1px) skewX("+((x-w/2)/w*-30)+"deg)";
+    tape.appendChild(tk);
+    if(big){const lb=document.createElement("div");lb.textContent=NM[d];
+      lb.style.cssText="position:absolute;top:8px;left:"+(x+6)+"px;color:"+(d===0?"#ff6b6b":"#f2f5ff")+";font-size:19px;font-weight:bold;white-space:nowrap";
+      tape.appendChild(lb)}
+  }
+}
+function pickDir(){
+  const t=Date.now();let h=null,st="none";
+  if(gH!==null&&t-gT<3000){h=gH;st="gps"}
+  else if(gH!==null){h=gH;st="stop"}
+  else if(mH!==null&&t-mT<2000){h=mH;st="mag"}
+  $("tri").classList.toggle("blink",st==="stop");
+  $("tapeMsg").classList.toggle("hide",st!=="none");
+  $("tape").classList.toggle("dim",st==="none");
+  if(h===null)return;
+  const deg=Math.round(h)%360;
+  if(dShow===null||Math.abs(((deg-dShow+540)%360)-180)>=2)dShow=deg;
+}
+setInterval(pickDir,250);
+/* 方位バーをなめらかに動かす */
+function anim(){
+  const target=dShow===null?0:dShow;
+  if(hNow===null)hNow=target;
+  const diff=((target-hNow)%360+540)%360-180;
+  if(Math.abs(diff)>0.2){hNow+=diff*0.2;drawTape(hNow)}
+  else if(hNow!==target){hNow=target;drawTape(hNow)}
+  requestAnimationFrame(anim);
+}
+drawTape(0);requestAnimationFrame(anim);
+
+/* ---------- 勾配：スマホの傾きセンサー（サムレット・勾配メーターと同じ計算） ---------- */
+let fu=null,fz=null,last=0,curO=null,zero=null,cal=null,gotMotion=false;
+const SMOOTH=0.6,SHAKE_ON=1.5;
+let sx=0,sy=0,sz=0,shakeUntil=0,freezeFrom=0,frozen=false,shown=null,pendT=0,hist=[];
+let rev=store.get("mmv_rev")==="1";
+function orient(){
+  const a=(screen.orientation&&screen.orientation.angle!=null)?screen.orientation.angle:(window.orientation||0);
+  return ((a%360)+360)%360;
+}
+function zst(){$("zst").textContent=zero===null?"水平：未設定":"水平設定：済み"}
+function loadZero(){
+  const o=orient();if(o===curO)return;curO=o;
+  const z=parseFloat(store.get("mmv_zero_"+o));zero=isNaN(z)?null:z;
+  fu=null;fz=null;shown=null;hist=[];zst();
+}
+function onMotion(e){
+  const gr=e.accelerationIncludingGravity;if(!gr||gr.x==null)return;
+  gotMotion=true;loadZero();const o=curO;
+  const u=o===90?gr.x:o===270?-gr.x:o===180?-gr.y:gr.y;
+  const z=gr.z;
+  const now=performance.now(),dt=last?Math.min((now-last)/1000,0.2):0.02;last=now;
+  if(cal){cal.u+=u;cal.z+=z;cal.n++}
+  /* 加速・ブレーキの検出：重力を除いた揺れを0.15秒でならす */
+  const la=e.acceleration,ks=1-Math.exp(-dt/0.15);
+  if(la&&la.x!=null){sx+=ks*(la.x-sx);sy+=ks*(la.y-sy);sz+=ks*(la.z-sz)}
+  else{sx+=ks*(gr.x-sx);sy+=ks*(gr.y-sy);sz+=ks*(gr.z-sz)}
+  const mag=(la&&la.x!=null)?Math.hypot(sx,sy,sz):Math.abs(Math.hypot(sx,sy,sz)-9.81);
+  if(mag>SHAKE_ON)shakeUntil=now+800;
+  const was=frozen;
+  frozen=fu!==null&&now<shakeUntil;
+  if(frozen){if(!freezeFrom)freezeFrom=now;if(now-freezeFrom>5000)frozen=false}else freezeFrom=0;
+  if(frozen){
+    if(!was){const old=hist.find(s=>s.t>=now-600);if(old){fu=old.fu;fz=old.fz}}
+    return;
+  }
+  const k=1-Math.exp(-dt/SMOOTH);
+  if(fu===null){fu=u;fz=z}else{fu+=k*(u-fu);fz+=k*(z-fz)}
+  hist.push({t:now,fu,fz});while(hist.length&&hist[0].t<now-1200)hist.shift();
+}
+function wrap(a){while(a>Math.PI)a-=2*Math.PI;while(a<-Math.PI)a+=2*Math.PI;return a}
+let pSum=0,pN=0;
+function settle(p){
+  const now=performance.now();
+  if(shown===null){shown=Math.round(p);pendT=0;return shown}
+  if(Math.abs(p-shown)<0.8){pendT=0;pSum=0;pN=0;return shown}
+  if(!pendT){pendT=now;pSum=0;pN=0}
+  pSum+=p;pN++;
+  const avg=pSum/pN,diff=Math.abs(avg-shown);
+  if(now-pendT>=(diff>=1.8?300:800)&&Math.round(avg)!==shown){shown=Math.round(avg);pendT=0;pSum=0;pN=0}
+  return shown;
+}
+function setSlope(r){$("slope").style.transform="rotate("+(-Math.max(-35,Math.min(35,Math.atan(r/100)*180/Math.PI*2.5))).toFixed(1)+"deg)"} /* 傾きは見やすく2.5倍に誇張 */
+function drawGrade(){
+  const row=$("grdRow");
+  if(fu===null||zero===null){
+    row.classList.remove("blink");
+    $("ud").textContent="未設定";$("grd").textContent="--";setSlope(0);return;
+  }
+  row.classList.toggle("blink",!!frozen);
+  let a=-wrap(Math.atan2(fz,fu)-zero);if(rev)a=-a;
+  const p=Math.tan(a)*100,r=frozen?(shown===null?Math.round(p):shown):settle(p);
+  if(frozen)pendT=0;
+  $("ud").textContent=r>=1?"上り":r<=-1?"下り":"平坦";
+  $("grd").textContent=String(Math.min(99,Math.abs(r)));
+  setSlope(r);
+}
+function doZero(){
+  if(fu===null){toast("センサーの値がまだ届いていません");return}
+  loadZero();cal={u:0,z:0,n:0};
+  toast("水平を測っています…スマホに触らないでください");
+  $("zero").disabled=true;
+  setTimeout(()=>{
+    const c=cal;cal=null;$("zero").disabled=false;
+    if(!c||c.n<5){toast("うまく測れませんでした。もう一度押してください");return}
+    zero=Math.atan2(c.z/c.n,c.u/c.n);shown=null;
+    store.set("mmv_zero_"+curO,String(zero));zst();
+    toast("水平を設定しました（0%）");
+  },1500);
+}
+$("zero").addEventListener("click",doZero);
+$("rev").addEventListener("click",()=>{rev=!rev;shown=null;store.set("mmv_rev",rev?"1":"0");toast(rev?"上り・下りを反転しました":"上り・下りを元に戻しました")});
+setInterval(drawGrade,150);
+
+/* ---------- 画面ON維持 ---------- */
+let running=false;
+async function keepOn(){
+  try{if(!("wakeLock" in navigator))throw 0;await navigator.wakeLock.request("screen")}
+  catch(e){if(running)toast("画面ONを保てません。自動ロックをオフにしてください")}
+}
+document.addEventListener("visibilitychange",()=>{if(running&&document.visibilityState==="visible")keepOn()});
+
+/* ---------- スタート（オープニングで同意してから計測開始） ---------- */
+async function start(){
+  try{
+    if(typeof DeviceMotionEvent!=="undefined"&&typeof DeviceMotionEvent.requestPermission==="function"){
+      const p=await DeviceMotionEvent.requestPermission();
+      if(p!=="granted"){$("err").textContent="傾きセンサーの使用が許可されませんでした";return}
+    }
+  }catch(e){$("err").textContent="傾きセンサーの許可を確認できませんでした";return}
+  try{
+    if(typeof DeviceOrientationEvent!=="undefined"&&typeof DeviceOrientationEvent.requestPermission==="function")await DeviceOrientationEvent.requestPermission();
+  }catch(e){}
+  window.addEventListener("devicemotion",onMotion);
+  startCompass();
+  running=true;keepOn();startGeo();
+  $("op").classList.add("hide");$("turn").classList.add("on");
+  try{if(screen.orientation&&screen.orientation.lock)screen.orientation.lock("landscape").catch(()=>{})}catch(e){}
+  curO=null;loadZero();fit();
+  setTimeout(()=>{if(!gotMotion)toast("傾きセンサーが動きません。ChromeかSafariで直接開いてください")},3000);
+}
+$("go").addEventListener("click",start);
+
+/* ---------- 開くたびに最新版を確認し、新しい版が届いたら自動で入れ替える（サムレットと同じ） ---------- */
+try{const s=sessionStorage.getItem("mmv_scroll");if(s!==null){sessionStorage.removeItem("mmv_scroll");requestAnimationFrame(()=>{$("op").scrollTop=+s})}}catch(e){}
+if("serviceWorker" in navigator){
+  const had=!!navigator.serviceWorker.controller;let done=false;
+  navigator.serviceWorker.addEventListener("controllerchange",()=>{
+    if(!had||done||running)return;done=true;
+    try{sessionStorage.setItem("mmv_scroll",String($("op").scrollTop))}catch(e){}
+    location.reload();
+  });
+  navigator.serviceWorker.register("sw.js",{updateViaCache:"none"}).then(r=>{
+    r.update().catch(()=>{});
+    document.addEventListener("visibilitychange",()=>{if(document.visibilityState==="visible")r.update().catch(()=>{})});
+  }).catch(()=>{});
+}
+}
+</script>
+<!-- Cloudflare Web Analytics --><script type='module' src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "e75f1ba2a4504431bdc7f3ccb9d2206a"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>
