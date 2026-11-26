@@ -103,6 +103,8 @@ body{background:#000;color:var(--ink);font-family:var(--f-ui);overflow:hidden;us
   padding:max(20px,env(safe-area-inset-top)) max(20px,env(safe-area-inset-right)) max(20px,env(safe-area-inset-bottom)) max(20px,env(safe-area-inset-left))}
 .op .lg{width:min(80vw,420px);height:auto}
 .op .y{color:#ccc;font-size:14px;letter-spacing:.1em;text-align:center;margin-top:-6px}
+.land{border:2px solid #fff;border-radius:12px;padding:8px 18px;text-align:center;font-size:18px;font-weight:800;line-height:1.4}
+.land span{display:block;font-size:13px;font-weight:500;color:#ccc}
 .warn{max-width:40em;border:2px solid #ffd400;border-radius:12px;padding:12px 14px;background:#1a1806}
 .warn h2{margin:0 0 6px;font-size:17px;color:#ffd400}
 .warn ul{margin:0;padding-left:1.3em;font-size:14px;line-height:1.6}
@@ -164,7 +166,7 @@ body{background:#000;color:var(--ink);font-family:var(--f-ui);overflow:hidden;us
   </div></div>
   <div id="toast"></div>
   <div class="bar">
-    <span class="ver">Ver 0.5</span>
+    <span class="ver">Ver 0.6</span>
     <button class="bb" id="zero" type="button">水平リセット</button>
     <span id="zst">水平：未設定</span>
     <button class="bb" id="rev" type="button">上下反転</button>
@@ -177,7 +179,8 @@ body{background:#000;color:var(--ink);font-family:var(--f-ui);overflow:hidden;us
 
 <div class="op" id="op" role="dialog" aria-label="ご利用の前に">
   <img class="lg" alt="Moto Meter V" src="assets/logo.webp">
-  <div class="y">モトメーター V　Ver 0.5</div>
+  <div class="y">モトメーター V　Ver 0.6</div>
+  <div class="land">横画面専用アプリです<span>スマホを横向きにしてお使いください</span></div>
 
   <div class="warn">
     <h2>必ずお読みください</h2>
