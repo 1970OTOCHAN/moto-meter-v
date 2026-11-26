@@ -54,8 +54,9 @@ body{background:#000;color:var(--ink);font-family:var(--f-ui);overflow:hidden;us
 .slopeA{flex:1;min-height:0;display:flex;align-items:flex-end;justify-content:flex-end;padding:4px 4px 4px 0}
 #slope{position:absolute;inset:0;transform-origin:50% 85%;transition:transform .4s}
 .grdRow{display:flex;justify-content:flex-end;padding-right:156px;align-items:baseline;gap:6px;border-bottom:2px solid var(--line);padding-bottom:3px}
-#trip{display:flex;align-items:baseline;justify-content:flex-end;gap:10px;margin-top:3px;padding-right:4px;border-radius:6px;cursor:pointer}
-#trip.press{background:rgba(255,255,255,.15)}
+#trip{display:flex;align-items:baseline;justify-content:flex-end;gap:10px;margin-top:3px;padding-right:4px}
+#trst{align-self:center;height:22px;padding:0 10px;border-radius:11px;border:1px solid var(--line);background:rgba(10,20,90,.55);color:var(--ink);font:bold 12px var(--f-ui);margin-right:2px;cursor:pointer;touch-action:none}
+#trst.press{background:var(--ink);color:var(--lcd)}
 .right{width:66px;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
 #altLb.gps{font-size:11px;letter-spacing:0}
 #gauge{display:flex;flex-direction:column;gap:3px}
@@ -67,7 +68,7 @@ body{background:#000;color:var(--ink);font-family:var(--f-ui);overflow:hidden;us
 .bb{height:30px;padding:0 18px;border-radius:15px;border:1px solid #556;background:#262a40;color:#e8ecff;font:bold 14px var(--f-ui);cursor:pointer}
 .bb:disabled{opacity:.5}
 #zst{color:#9fa6c8;font-size:13px;min-width:110px;text-align:center}
-#toast{position:absolute;left:50%;bottom:52px;transform:translateX(-50%);z-index:9;background:rgba(10,12,30,.9);color:#fff;font:bold 14px var(--f-ui);padding:6px 14px;border-radius:16px;white-space:nowrap;display:none}
+#toast{pointer-events:none;position:absolute;left:50%;bottom:52px;transform:translateX(-50%);z-index:9;background:rgba(10,12,30,.9);color:#fff;font:bold 14px var(--f-ui);padding:6px 14px;border-radius:16px;white-space:nowrap;display:none}
 
 /* 縦向きのとき */
 #turn{position:fixed;inset:0;z-index:40;background:#000;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:20px}
@@ -130,7 +131,7 @@ body{background:#000;color:var(--ink);font-family:var(--f-ui);overflow:hidden;us
           </div>
         </div></div>
         <div class="grdRow" id="grdRow"><span id="ud" style="font-size:18px;font-weight:bold">未設定</span><span id="grd" class="sg" style="font-size:26px">--</span><span class="lb">%</span></div>
-        <div id="trip" title="長押しで0.0に戻す"><span class="lb">TRIP</span><span><span id="dst" class="sg" style="font-size:22px">000.0</span><span class="lb"> km</span></span></div>
+        <div id="trip"><button id="trst" type="button" title="1秒長押しでTRIPを0.0に戻す">リセット</button><span class="lb">TRIP</span><span><span id="dst" class="sg" style="font-size:22px">000.0</span><span class="lb"> km</span></span></div>
       </div>
       <div class="right">
         <span class="lb" id="altLb">ALT</span>
@@ -141,7 +142,7 @@ body{background:#000;color:var(--ink);font-family:var(--f-ui);overflow:hidden;us
   </div></div>
   <div id="toast"></div>
   <div class="bar">
-    <span class="ver">Ver 0.1</span>
+    <span class="ver">Ver 0.2</span>
     <button class="bb" id="zero" type="button">水平リセット</button>
     <span id="zst">水平：未設定</span>
     <button class="bb" id="rev" type="button">上下反転</button>
@@ -154,7 +155,7 @@ body{background:#000;color:var(--ink);font-family:var(--f-ui);overflow:hidden;us
 
 <div class="op" id="op" role="dialog" aria-label="ご利用の前に">
   <img class="lg" alt="Moto Meter V" src="assets/logo.webp">
-  <div class="y">モトメーター V　Ver 0.1（試作）</div>
+  <div class="y">モトメーター V　Ver 0.2（試作）</div>
 
   <div class="warn">
     <h2>必ずお読みください</h2>
@@ -177,7 +178,7 @@ body{background:#000;color:var(--ink);font-family:var(--f-ui);overflow:hidden;us
       <li>「同意してスタート」を押し、位置情報の使用を「許可」する</li>
       <li>画面の下の「水平リセット」を押す（横向きの左右それぞれで1回）</li>
       <li>上り坂で「下り」と出たときは「上下反転」を押す</li>
-      <li>TRIPは、数字を長押しすると 0.0 に戻ります（アプリを閉じても続きから数えます）</li>
+      <li>TRIPは、左の「リセット」ボタンを1秒長押しすると 0.0 に戻ります（アプリを閉じても続きから数えます）</li>
     </ol>
   </div>
 
@@ -286,13 +287,16 @@ function tripFrom(pos,p,t){
   trip+=d/1000;tAnchor={lat:p.lat,lon:p.lon,t};
   store.set("mmv_trip",String(trip));showTrip();
 }
-/* TRIPの数字を長押し（1秒）で 0.0 に戻す */
-let lpT=0;
-function lpStart(e){e.preventDefault();$("trip").classList.add("press");lpT=setTimeout(()=>{trip=0;tAnchor=null;store.set("mmv_trip","0");showTrip();$("trip").classList.remove("press");toast("TRIPを 0.0 に戻しました")},1000)}
-function lpEnd(){clearTimeout(lpT);$("trip").classList.remove("press")}
-$("trip").addEventListener("pointerdown",lpStart);
-["pointerup","pointerleave","pointercancel"].forEach(ev=>$("trip").addEventListener(ev,lpEnd));
-$("trip").addEventListener("contextmenu",e=>e.preventDefault());
+/* Ver 0.2：TRIPの左の「リセット」ボタンを1秒長押しで 0.0 に戻す（数字の長押しはやめた）。
+   すぐ離したときは押し方を案内する */
+let lpT=0,lpDone=false;
+function lpStart(e){e.preventDefault();lpDone=false;$("trst").classList.add("press");
+  lpT=setTimeout(()=>{lpDone=true;trip=0;tAnchor=null;store.set("mmv_trip","0");showTrip();$("trst").classList.remove("press");toast("TRIPを 0.0 に戻しました")},1000)}
+function lpEnd(e){if(!$("trst").classList.contains("press"))return;clearTimeout(lpT);$("trst").classList.remove("press");
+  if(!lpDone&&e.type==="pointerup")toast("TRIPを戻すときは「リセット」を1秒長押ししてください")}
+$("trst").addEventListener("pointerdown",lpStart);
+["pointerup","pointerleave","pointercancel"].forEach(ev=>$("trst").addEventListener(ev,lpEnd));
+$("trst").addEventListener("contextmenu",e=>e.preventDefault());
 
 /* 標高：国土地理院の標高API（地面の高さ）。取れないときはGPSの高さを目安に（サムレットと同じ） */
 let lastQ=null,lastQT=0,qBusy=false,gsiOk=false;
