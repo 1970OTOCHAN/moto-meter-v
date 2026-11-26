@@ -101,6 +101,21 @@ body{background:#000;color:var(--ink);font-family:var(--f-ui);overflow:hidden;us
 #zst{color:#9fa6c8;font-size:13px;min-width:110px;text-align:center}
 #toast{pointer-events:none;position:absolute;left:50%;top:190px;transform:translateX(-50%);z-index:9;background:rgba(10,12,30,.9);color:#fff;font:bold 14px var(--f-ui);padding:6px 14px;border-radius:16px;white-space:nowrap;display:none}
 
+/* Ver 1.3：昼（日の出〜日の入り）は液晶の背景を黒に。夜は今の青 */
+#lcd.day{--lcd:#050505;--line:#d6d9e0;box-shadow:inset 0 0 0 2px #3a3a3a}
+#lcd.day .ghost{fill:#1f1f1f}
+#lcd.day .gz{background:#222}
+#lcd.day .gz.on{background:var(--ink)}
+#lcd.day #sig i{background:#2a2a2a}
+#lcd.day #sig i.on{background:#f2f5ff}
+#lcd.day #trst{background:rgba(40,40,40,.7)}
+#lcd.day #kv{filter:blur(1.5px) grayscale(1) brightness(.55)}
+/* Ver 1.3：文字と数字を少し太く */
+#lcd .sg{-webkit-text-stroke:.7px currentColor}
+#spd{stroke:#f2f5ff;stroke-width:2.5;stroke-linejoin:round}
+#lcd .lb{font-weight:700}
+#ud{font-weight:900!important}
+
 /* 縦向きのとき */
 #turn{position:fixed;inset:0;z-index:40;background:#000;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:20px}
 #turn b{font-size:22px}
@@ -151,7 +166,7 @@ body{background:#000;color:var(--ink);font-family:var(--f-ui);overflow:hidden;us
       <div class="left">
         <span id="gps" class="no">GPS</span><span id="sig"><i></i><i></i><i></i><i></i></span>
         <svg id="spdsvg" viewBox="0 -150 345 150" preserveAspectRatio="xMidYMax meet" width="214" height="150">
-          <text class="sg" x="0" y="0" font-size="150" fill="#2a3cc4">888</text>
+          <text class="sg ghost" x="0" y="0" font-size="150" fill="#2a3cc4">888</text>
           <text id="spd" class="sg" x="0" y="0" font-size="150" fill="#f2f5ff">!--</text>
         </svg>
         <div id="kv"></div>
@@ -177,7 +192,7 @@ body{background:#000;color:var(--ink);font-family:var(--f-ui);overflow:hidden;us
   </div></div>
   <div id="toast"></div>
   <div class="bar">
-    <span class="ver">Ver 1.2</span>
+    <span class="ver">Ver 1.3</span>
     <button class="bb" id="zero" type="button">水平リセット</button>
     <span id="zst">水平：未設定</span>
     <button class="bb" id="rev" type="button">上下反転</button>
@@ -190,7 +205,7 @@ body{background:#000;color:var(--ink);font-family:var(--f-ui);overflow:hidden;us
 
 <div class="op" id="op" role="dialog" aria-label="ご利用の前に">
   <img class="lg" alt="Moto Meter V" src="assets/logo.webp">
-  <div class="y">モトメーター V　Ver 1.2</div>
+  <div class="y">モトメーター V　Ver 1.3</div>
   <div class="land">横画面専用アプリです<span>スマホを横向きにしてお使いください</span></div>
 
   <div class="warn">
@@ -355,6 +370,7 @@ async function queryGsi(p){
 }
 function onPos(pos){
   const p={lat:pos.coords.latitude,lon:pos.coords.longitude},t=Date.now();
+  sunLL=p;if(t-sunSaved>60000){sunSaved=t;store.set("mmv_ll",p.lat.toFixed(3)+","+p.lon.toFixed(3))}
   lastFix=t;lastAcc=pos.coords.accuracy;gpsGood=lastAcc<=50;
   speedFrom(pos,p,t);tripFrom(pos,p,t);gpsHeading(pos,p);
   if(!qBusy&&(!lastQ||dist(lastQ,p)>15||t-lastQT>5000)){lastQ=p;lastQT=t;queryGsi(p)}
@@ -572,6 +588,22 @@ function startIntro(){
     intro=false;drawSpeed();
   },4000);
 }
+
+/* ---------- 昼と夜の切り替え（Ver 1.3）----------
+   現在地と今の時刻から太陽の高さを計算し、日の出〜日の入り（太陽が地平線より上）は液晶を黒、
+   それ以外は青。位置がまだ取れないときは前回の場所（mmv_ll）、初めては大阪あたりで計算。30秒ごとに確かめる */
+let sunLL=(()=>{const v=(store.get("mmv_ll")||"").split(",").map(Number);return v.length===2&&isFinite(v[0])&&isFinite(v[1])?{lat:v[0],lon:v[1]}:{lat:34.69,lon:135.50}})(),sunSaved=0;
+function sunAlt(lat,lon,date){
+  const r=Math.PI/180,d=date.getTime()/86400000-10957.5;
+  const g=(357.529+0.98560028*d)*r,q=280.459+0.98564736*d;
+  const L=(q+1.915*Math.sin(g)+0.020*Math.sin(2*g))*r,e=(23.439-0.00000036*d)*r;
+  const ra=Math.atan2(Math.cos(e)*Math.sin(L),Math.cos(L)),dec=Math.asin(Math.sin(e)*Math.sin(L));
+  const gmst=(18.697374558+24.06570982441908*d)%24;
+  const H=((gmst*15+lon)*r-ra);
+  return Math.asin(Math.sin(lat*r)*Math.sin(dec)+Math.cos(lat*r)*Math.cos(dec)*Math.cos(H))/r;
+}
+function dayNight(){$("lcd").classList.toggle("day",sunAlt(sunLL.lat,sunLL.lon,new Date())>-0.833)}
+dayNight();setInterval(dayNight,30000);
 
 /* ---------- 画面ON維持 ---------- */
 let running=false;
