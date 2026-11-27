@@ -66,7 +66,7 @@ body{background:#000;color:var(--ink);font-family:var(--f-ui);overflow:hidden;us
 #tape.dim{opacity:.15}
 #tapeMsg{position:absolute;left:0;right:0;top:9px;text-align:center;font-size:15px;font-weight:bold;color:var(--ink)}
 .curve{position:absolute;left:-10%;width:120%;top:42px;height:60px;border-radius:50%;background:var(--lcd);border-top:2px solid var(--line)}
-#tri{position:absolute;left:50%;top:31px;transform:translateX(-50%);width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-bottom:11px solid #ff4d4d}
+#tri{position:absolute;left:50%;top:31px;transform:translateX(-50%);width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-bottom:11px solid #ffe14d}
 .body{position:relative;z-index:2;flex:1;min-height:0;display:flex;padding:0 14px 6px 14px;gap:10px}
 .date{position:absolute;left:50%;top:58px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1.15;z-index:3}
 .left{width:280px;flex:none;position:relative}
@@ -91,10 +91,12 @@ body{background:#000;color:var(--ink);font-family:var(--f-ui);overflow:hidden;us
 #trip{display:flex;align-items:baseline;justify-content:flex-end;gap:10px;margin-top:3px;padding-right:4px}
 #trst{align-self:center;height:22px;padding:0 10px;border-radius:11px;border:1px solid var(--line);background:rgba(10,20,90,.55);color:var(--ink);font:bold 12px var(--f-ui);margin-right:2px;cursor:pointer;touch-action:none}
 #trst.press{background:var(--ink);color:var(--lcd)}
-.right{width:66px;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
-#altLb.gps{font-size:11px;letter-spacing:0}
-#gauge{display:flex;flex-direction:column;gap:3px}
-.gz{height:12px;width:28px;background:#2c3dbf;border-radius:2px}
+.right{width:78px;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+/* Ver 1.6：標高まわりを約1.35倍（案C） */
+#altLb{font-size:21px}
+#altLb.gps{font-size:14px;letter-spacing:0}
+#gauge{display:flex;flex-direction:column;gap:4px}
+.gz{height:16px;width:38px;background:#2c3dbf;border-radius:2px}
 .gz.on{background:var(--ink)}
 .bar{height:40px;flex:none;display:flex;align-items:center;justify-content:center;gap:14px;padding-top:4px;position:relative}
 .bar .ver{position:absolute;left:4px;bottom:4px;color:#6f7590;font-size:10px}
@@ -189,13 +191,13 @@ body{background:#000;color:var(--ink);font-family:var(--f-ui);overflow:hidden;us
       <div class="right">
         <span class="lb" id="altLb">標高</span>
         <div id="gauge"></div>
-        <span style="white-space:nowrap"><span id="alt" class="sg" style="font-size:16px">!!--</span><span class="lb" style="font-size:14px">m</span></span>
+        <span style="white-space:nowrap"><span id="alt" class="sg" style="font-size:22px">!!--</span><span class="lb" style="font-size:18px">m</span></span>
       </div>
     </div>
   </div></div>
   <div id="toast"></div>
   <div class="bar">
-    <span class="ver">Ver 1.5</span>
+    <span class="ver">Ver 1.6</span>
     <button class="bb" id="zero" type="button">水平リセット</button>
     <span id="zst">水平：未設定</span>
     <button class="bb" id="rev" type="button">上下反転</button>
@@ -208,7 +210,7 @@ body{background:#000;color:var(--ink);font-family:var(--f-ui);overflow:hidden;us
 
 <div class="op" id="op" role="dialog" aria-label="ご利用の前に">
   <span class="lgo"><img class="lg" alt="Moto Meter V" src="assets/logo.webp"><span class="tm2">™</span></span>
-  <div class="y">モトメーター V™　Ver 1.5</div>
+  <div class="y">モトメーター V™　Ver 1.6</div>
   <div class="land">横画面専用アプリです<span>スマホを横向きにしてお使いください</span></div>
 
   <div class="warn">
@@ -439,7 +441,7 @@ function startCompass(){
   if("ondeviceorientationabsolute" in window)window.addEventListener("deviceorientationabsolute",onOriAbs);
   window.addEventListener("deviceorientation",onOriIos);
 }
-/* 方位バー（見本と同じ描き方：15°ごとの目盛り、8方位は日本語、北は赤） */
+/* 方位バー（見本と同じ描き方：15°ごとの目盛り、8方位は日本語、北は黄色。Ver 1.6で赤から黄色に） */
 const NM={0:"北",45:"北東",90:"東",135:"南東",180:"南",225:"南西",270:"西",315:"北西"};
 function drawTape(h){
   const tape=$("tape");tape.innerHTML="";const w=tape.offsetWidth||676,pp=w/180;
@@ -449,7 +451,7 @@ function drawTape(h){
     tk.style.cssText="position:absolute;top:0;left:"+x+"px;width:2px;background:#c9d2ff;height:"+(big?34:24)+"px;transform:translateX(-1px) skewX("+((x-w/2)/w*-30)+"deg)";
     tape.appendChild(tk);
     if(big){const lb=document.createElement("div");lb.textContent=NM[d];
-      lb.style.cssText="position:absolute;top:8px;left:"+(x+6)+"px;color:"+(d===0?"#ff6b6b":"#f2f5ff")+";font-size:19px;font-weight:bold;white-space:nowrap";
+      lb.style.cssText="position:absolute;top:8px;left:"+(x+6)+"px;color:"+(d===0?"#ffe14d":"#f2f5ff")+";font-size:19px;font-weight:bold;white-space:nowrap";
       tape.appendChild(lb)}
   }
 }
