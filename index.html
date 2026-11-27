@@ -96,6 +96,8 @@ body{background:#000;color:var(--ink);font-family:var(--f-ui);overflow:hidden;us
 #altLb{font-size:21px}
 #altLb.gps{font-size:14px;letter-spacing:0}
 #gauge{display:flex;flex-direction:column;gap:4px}
+/* Ver 1.7：標高の数字を白い四角（ゲージ）から少し離す */
+#altRow{margin-top:9px}
 .gz{height:16px;width:38px;background:#2c3dbf;border-radius:2px}
 .gz.on{background:var(--ink)}
 .bar{height:40px;flex:none;display:flex;align-items:center;justify-content:center;gap:14px;padding-top:4px;position:relative}
@@ -191,13 +193,13 @@ body{background:#000;color:var(--ink);font-family:var(--f-ui);overflow:hidden;us
       <div class="right">
         <span class="lb" id="altLb">標高</span>
         <div id="gauge"></div>
-        <span style="white-space:nowrap"><span id="alt" class="sg" style="font-size:22px">!!--</span><span class="lb" style="font-size:18px">m</span></span>
+        <span id="altRow" style="white-space:nowrap"><span id="alt" class="sg" style="font-size:22px">!!--</span><span class="lb" style="font-size:18px">m</span></span>
       </div>
     </div>
   </div></div>
   <div id="toast"></div>
   <div class="bar">
-    <span class="ver">Ver 1.6</span>
+    <span class="ver">Ver 1.7</span>
     <button class="bb" id="zero" type="button">水平リセット</button>
     <span id="zst">水平：未設定</span>
     <button class="bb" id="rev" type="button">上下反転</button>
@@ -210,7 +212,7 @@ body{background:#000;color:var(--ink);font-family:var(--f-ui);overflow:hidden;us
 
 <div class="op" id="op" role="dialog" aria-label="ご利用の前に">
   <span class="lgo"><img class="lg" alt="Moto Meter V" src="assets/logo.webp"><span class="tm2">™</span></span>
-  <div class="y">モトメーター V™　Ver 1.6</div>
+  <div class="y">モトメーター V™　Ver 1.7</div>
   <div class="land">横画面専用アプリです<span>スマホを横向きにしてお使いください</span></div>
 
   <div class="warn">
